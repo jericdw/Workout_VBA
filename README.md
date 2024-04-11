@@ -18,5 +18,9 @@ User-input weight is collected every time for individual exercise data.
 
 ![image](https://github.com/jericdw/Workout_VBA/assets/65636464/22efe0d4-9608-4c5a-af1b-090b84a35f23)
 
+Following weight input, the program collects the number of exercises historically that have been done in a given workout category. The example below is for "Chest" workouts that were selected on the first dialogue box. Note: If you wish to add a new "Chest" workout, one needs to add the data onto "Sheet2" where this is scraped and collected based on those workout coefficients. This augments every time you add workouts to your recurring exercise-exercise coefficient (Cex) that gets stored and affects future point calculations recursively. Input point formulas are at the bottom of this next image. 
+
+![image](https://github.com/jericdw/Workout_VBA/assets/65636464/c8d04138-a26e-4ee7-a510-fe5c59bdfc1d)
+
 
 
