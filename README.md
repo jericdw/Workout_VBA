@@ -7,3 +7,16 @@ Below is a function diagram looking at inputs and outputs and how they relate. S
 ![Function_diagram](https://github.com/jericdw/Workout_VBA/assets/65636464/9d0a1400-bd6f-46af-b386-9ae104882f90)
 
 Naming conventions were personalized and probably need to be refactored to be a serious project. I'm in the process (eventually) of converting this to C# and thinking through object oriented programming techniques to better handle the data and from multiple users. If you look at "Workout_Blazor" that is a template slightly modified to test the SQLite database before I begin doing any of the logic developed in this program. 
+
+Below is the initial dialogue box to input either individual exercise data as part of a daily workout or an entire set of workout data. 
+
+![image](https://github.com/jericdw/Workout_VBA/assets/65636464/a424a65e-9c6f-45d8-b457-c63abf729639)
+
+For individual exercise data input, the exercise coefficients are calculated based on user-weight in the denominator that by design is optimized recursively over time. 
+
+User-input weight is collected every time for individual exercise data.
+
+![image](https://github.com/jericdw/Workout_VBA/assets/65636464/22efe0d4-9608-4c5a-af1b-090b84a35f23)
+
+
+
