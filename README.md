@@ -22,5 +22,14 @@ Following weight input, the program collects the number of exercises historicall
 
 ![image](https://github.com/jericdw/Workout_VBA/assets/65636464/c8d04138-a26e-4ee7-a510-fe5c59bdfc1d)
 
+Based on the type of exercise, there are 4 ways (R=Rep, W=Weight, T=Time, D=Distance) ways to measure the coefficient of performance based on how you specify the type of exercise in the collection in "Sheet2". 
 
+More to follow on the recursive nature of the points calculation. The goal is to find an optimum exercise coefficient below 1.000 that stabilizes from workout to workout. This means that consistency is key and the lower the coefficient (when stabilized) the more difficult the exercise reps/weight/time/distance is to maintain. Also, the number of sets is not critical but simply tracked as the sum of the reps is what is entered for each exercise. 
 
+Developing target workout data utilizes some of the more uniquely named functions to predictively tell the user what their exercise coefficients would be if they follow a given plan. Looking at the "Run" data the Distance data is historical until it gets to the red line. then the next 4 distances are predictive in order to get the coefficient to 0.144 as defined in F2 as the Run exercise 'target' for difficulty based on the formula. 
+
+![image](https://github.com/jericdw/Workout_VBA/assets/65636464/f5850313-f655-4d73-b1d3-28162fc9d7d8)
+
+If there are questions about how to use some of the more customized functions, I'm open to renaming but do not have time to go into detail here on the algorithm and how it works. If you have thoughts on how to improve from an object orientation standpoint, I'm interested in developing classes that can handle appropriate level of detail based on the instances that are developed with the data each user creates with each exercise or workout data iteration. 
+
+This project is incomplete/in-transition, but open to others' thoughts and contributions. Thank you!
