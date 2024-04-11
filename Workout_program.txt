@@ -1,0 +1,1050 @@
+''The MIT License (MIT)
+''Copyright © 2022 CPT Eric Johnson, US Army
+''
+''Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+''and associated documentation files (the “Software”), to deal in the Software without restriction,
+''including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
+''and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
+''subject to the following conditions:
+''
+''The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+''
+''THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+''INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+''PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+''FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+''ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Option Explicit                                                     '--> Refactoring methods/notes listed below
+
+Sub Main()
+    Dim i, j, tst, wst As Integer
+    Dim str As String
+
+    'Find last rows given starting points and sheet numbers with function call
+    tst = row_start(15, 1)         'type of workout starting row or tst                 '--> parameterized method for finding row start on two sheets
+
+    'Enter today's date as a string
+    Sheet1.Cells(tst, 1) = "=TODAY()"                                       '--> writes date to database(Excel) from 'workout' class
+    str = Sheet1.Cells(tst, 1) 'converts today's date to string                     '--> workout.date = 'string' rather than Excel defined string
+    Sheet1.Cells(tst, 1) = str 'reenters date so it doesn't change next day             '--> removes Excel function actually writing to database(Excel)//unnecessary with databases
+
+    'Enter Data for each day's Workout/Exercise or Develop New Routine                  '--> 'routine' class is a collection of 'workout' classes
+    j = 6              ' initialize to 'yes' response for 'additional workout entries'      '--> basic error handling in Excel using MsgBox() method
+    Do While j = 6     ' continue 'yes' response until finished at j = 7                '""
+        tst = query_workout(wtype("n/a"), row_start(15, 1), row_start(87, 2))               '--> query_workout() is the main program (macroservice) that needs to be split
+        j = MsgBox("Do you have additional exercise/workout entries or want to develop the next routine?", vbYesNo, "Additional Entries?") '--> encourages one-off exercise input vs batch
+    Loop
+
+    'Calculate new Exercise coefficients per workout type                           '--> writes to collection of 'exercises' with coefficients modified each iteration
+    i = cex_avg()
+
+    'Update the Sum List start/end periods                                  '--> designed to produce visualizion of progress based on coefficients or points (inverse)
+    i = graph_update(tst)
+
+End Sub
+
+'-------------------- Function Declarations ------------------'                     '--> split_q was designed to allow for weighting of exercises in a workout to achieve 'pts'
+'''Priority 1 Update'' -> Develop iterative sum function to divide it and add ability to mix/match capability for dev_routine()
+'Function split_q(ByVal qi As Integer) As Double                                '--> once program becomes object oriented, we need to revisit this concept
+'    Dim q As Double
+'    Dim i As Integer
+'    q = 1
+'    For i = 1 To qi - 2
+'        q = 1 / (1 + i)
+'    Next i
+'    split_q = q
+'End Function
+
+Function dev_routine(ByVal Wb As Integer)                                       '--> consider subsuming into routine.develop() and routine.write() methods that call others
+    Dim a, b, c, d, e, f, g, h, i, j, k, l, y, zi(10), ei(10), spt As Integer
+    Dim cq(20), q(6), cr(20), r(6), cs(20), s(6), ct(20), t(6), cu(20), u(6), cv(20), v(6), _
+        cw(20), w(6), Cx(20), x(6), cz(20), z(6), pts(10) As Double
+    Dim str, ob(20), ab(20), ba(20), ch(20), sh(20), le(20), ca(20), bi(20), tr(20), exnm(400), sco(400) As String
+
+    'Run controls function/sub routine to update future path to decreasing coefficients
+
+    controls (Wb)                                                       '--> method receives bodyweight as input; should receive 'person' class with all variables
+                                                                '--> go to function definition to see refactoring methods employed
+    'Count # exercises and points per workout type
+    For j = 1 To 9
+        'set exercise cnt to 1 for this workout type
+        e = 1
+        'Find Workout type Category points to earn
+        pts(j) = Sheet2.Cells(j + 2, 10) / Sheet2.Cells(j + 2, 9) ''Cgrowth/Cavg
+        'initialize counter for number of exercises per category
+        zi(j) = 0
+        For i = 3 To 48
+            'Workout type in Brochure is matched to Workout Type in Exercise Repository
+            If Sheets("Workout_Battle_Rhythm").Cells(i, 2) = Sheet2.Cells(j + 2, 1) Then
+                'Workout Type matches
+                zi(j) = zi(j) + 1
+            Else
+            End If
+        Next i
+'        MsgBox ("exnm(" & e & ") is " & exnm(e) & ", " & sco(e))
+    Next j
+
+'    str = ""
+'    For i = 1 To 9
+'        str = str & i & ". zi(x) = " & zi(i) & " pts/type = " & Format(pts(i), "#.##") & " pts/ex = " & Format(pts(i) / zi(i), "#.##") & vbCrLf
+'    Next i
+'    MsgBox (str)
+
+    'For Different Brochure Battle Rhythm, consider starting here
+    a = 3       'chest start
+    b = 6       'back start
+    c = 9       'tricep start
+    d = 19      'abs start
+    e = 22      'obliques start
+    f = 25      'cardio start
+    g = 35      'shoulder start
+    h = 38      'legs start
+    l = 41      'biceps start
+
+    For i = 2 To row_start(40, 2) - 1
+        Select Case (Sheet2.Cells(i, 3))
+            Case "Obliques":
+                If e < 25 Then
+                    j = 1
+                    Sheets("Workout_Battle_Rhythm").Cells(e, 1) = Sheet2.Cells(i, 2)
+                    Sheets("Workout_Battle_Rhythm").Cells(e, 3) = Sheet2.Cells(i, 4)
+                    Sheets("Workout_Battle_Rhythm").Cells(e, 4) = Sheet2.Cells(i, 5)
+                    Sheets("Workout_Battle_Rhythm").Cells(e, 5) = Format(pts(j) / zi(j), "#.##")
+                    Sheets("Workout_Battle_Rhythm").Cells(e, 6) = get_WRMS("OB", Sheet2.Cells(i, 2), Sheet2.Cells(i, 4))
+                    e = e + 1
+                Else
+                End If
+            Case "Abs":
+                If d < 22 Then
+                    j = 2
+                    Sheets("Workout_Battle_Rhythm").Cells(d, 1) = Sheet2.Cells(i, 2)
+                    Sheets("Workout_Battle_Rhythm").Cells(d, 3) = Sheet2.Cells(i, 4)
+                    Sheets("Workout_Battle_Rhythm").Cells(d, 4) = Sheet2.Cells(i, 5)
+                    Sheets("Workout_Battle_Rhythm").Cells(d, 5) = Format(pts(j) / zi(j), "#.##")
+                    Sheets("Workout_Battle_Rhythm").Cells(d, 6) = get_WRMS("AB", Sheet2.Cells(i, 2), Sheet2.Cells(i, 4))
+                    d = d + 1
+                Else
+                End If
+            Case "Back":
+                If b < 9 Then
+                    j = 3
+                    Sheets("Workout_Battle_Rhythm").Cells(b, 1) = Sheet2.Cells(i, 2)
+                    Sheets("Workout_Battle_Rhythm").Cells(b, 3) = Sheet2.Cells(i, 4)
+                    Sheets("Workout_Battle_Rhythm").Cells(b, 4) = Sheet2.Cells(i, 5)
+                    Sheets("Workout_Battle_Rhythm").Cells(b, 5) = Format(pts(j) / zi(j), "#.##")
+                    Sheets("Workout_Battle_Rhythm").Cells(b, 6) = get_WRMS("BA", Sheet2.Cells(i, 2), Sheet2.Cells(i, 4))
+                    b = b + 1
+                Else
+                End If
+            Case "Chest":
+                If a < 6 Then
+                    j = 4
+                    Sheets("Workout_Battle_Rhythm").Cells(a, 1) = Sheet2.Cells(i, 2)
+                    Sheets("Workout_Battle_Rhythm").Cells(a, 3) = Sheet2.Cells(i, 4)
+                    Sheets("Workout_Battle_Rhythm").Cells(a, 4) = Sheet2.Cells(i, 5)
+                    Sheets("Workout_Battle_Rhythm").Cells(a, 5) = Format(pts(j) / zi(j), "#.##")
+                    Sheets("Workout_Battle_Rhythm").Cells(a, 6) = get_WRMS("CH", Sheet2.Cells(i, 2), Sheet2.Cells(i, 4))
+                    a = a + 1
+                Else
+                End If
+            Case "Shoulder":
+                If g < 38 Then
+                    j = 5
+                    Sheets("Workout_Battle_Rhythm").Cells(g, 1) = Sheet2.Cells(i, 2)
+                    Sheets("Workout_Battle_Rhythm").Cells(g, 3) = Sheet2.Cells(i, 4)
+                    Sheets("Workout_Battle_Rhythm").Cells(g, 4) = Sheet2.Cells(i, 5)
+                    Sheets("Workout_Battle_Rhythm").Cells(g, 5) = Format(pts(j) / zi(j), "#.##")
+                    Sheets("Workout_Battle_Rhythm").Cells(g, 6) = get_WRMS("SH", Sheet2.Cells(i, 2), Sheet2.Cells(i, 4))
+                    g = g + 1
+                Else
+                End If
+            Case "Legs":
+                If h < 41 Then
+                    j = 6
+                    Sheets("Workout_Battle_Rhythm").Cells(h, 1) = Sheet2.Cells(i, 2)
+                    Sheets("Workout_Battle_Rhythm").Cells(h, 3) = Sheet2.Cells(i, 4)
+                    Sheets("Workout_Battle_Rhythm").Cells(h, 4) = Sheet2.Cells(i, 5)
+                    Sheets("Workout_Battle_Rhythm").Cells(h, 5) = Format(pts(j) / zi(j), "#.##")
+                    Sheets("Workout_Battle_Rhythm").Cells(h, 6) = get_WRMS("LE", Sheet2.Cells(i, 2), Sheet2.Cells(i, 4))
+                    h = h + 1
+                Else
+                End If
+            Case "Cardio":
+                If f <= 27 Then
+                    j = 7
+                    If f = 27 Then
+                        'Add run on line 27 every time as a cardio option
+                        If Sheet2.Cells(i, 2) = "Run" Then
+                            Sheets("Workout_Battle_Rhythm").Cells(f, 1) = Sheet2.Cells(i, 2)
+                            Sheets("Workout_Battle_Rhythm").Cells(f, 3) = Sheet2.Cells(i, 4)
+                            Sheets("Workout_Battle_Rhythm").Cells(f, 4) = Sheet2.Cells(i, 5)
+                            Sheets("Workout_Battle_Rhythm").Cells(f, 5) = Format(pts(j) / zi(j), "#.##")
+                            Sheets("Workout_Battle_Rhythm").Cells(f, 6) = get_WRMS("CA", Sheet2.Cells(i, 2), Sheet2.Cells(i, 4))
+                        Else
+                        End If
+                    Else
+                        Sheets("Workout_Battle_Rhythm").Cells(f, 1) = Sheet2.Cells(i, 2)
+                        Sheets("Workout_Battle_Rhythm").Cells(f, 3) = Sheet2.Cells(i, 4)
+                        Sheets("Workout_Battle_Rhythm").Cells(f, 4) = Sheet2.Cells(i, 5)
+                        Sheets("Workout_Battle_Rhythm").Cells(f, 5) = Format(pts(j) / zi(j), "#.##")
+                        Sheets("Workout_Battle_Rhythm").Cells(f, 6) = get_WRMS("CA", Sheet2.Cells(i, 2), Sheet2.Cells(i, 4))
+                        f = f + 1
+                    End If
+                Else
+                End If
+            Case "Biceps":
+                If l < 43 Then
+                    j = 8
+                    Sheets("Workout_Battle_Rhythm").Cells(l, 1) = Sheet2.Cells(i, 2)
+                    Sheets("Workout_Battle_Rhythm").Cells(l, 3) = Sheet2.Cells(i, 4)
+                    Sheets("Workout_Battle_Rhythm").Cells(l, 4) = Sheet2.Cells(i, 5)
+                    Sheets("Workout_Battle_Rhythm").Cells(l, 5) = Format(pts(j) / zi(j), "#.##")
+                    Sheets("Workout_Battle_Rhythm").Cells(l, 6) = get_WRMS("BI", Sheet2.Cells(i, 2), Sheet2.Cells(i, 4))
+                    l = l + 1
+                Else
+                End If
+            Case "Tricep":
+                If c < 11 Then
+                    j = 9
+                    Sheets("Workout_Battle_Rhythm").Cells(c, 1) = Sheet2.Cells(i, 2)
+                    Sheets("Workout_Battle_Rhythm").Cells(c, 3) = Sheet2.Cells(i, 4)
+                    Sheets("Workout_Battle_Rhythm").Cells(c, 4) = Sheet2.Cells(i, 5)
+                    Sheets("Workout_Battle_Rhythm").Cells(c, 5) = Format(pts(j) / zi(j), "#.##")
+                    Sheets("Workout_Battle_Rhythm").Cells(c, 6) = get_WRMS("TR", Sheet2.Cells(i, 2), Sheet2.Cells(i, 4))
+                    c = c + 1
+                Else
+                End If
+            Case Else:
+        End Select
+    Next i
+End Function
+
+'Retrieve WRMS Data from Controls Worksheet
+Function get_WRMS(ByVal str As String, ByVal exn As String, Cx As Double) As Long
+    Dim i, j, k, jcol As Integer
+    k = wtype(str) + 1
+    'input type of workout from sheet defined by str
+    For j = 2 To 314 Step 3
+        If exn = Sheets("Cex_" & str).Cells(1, j) Then
+            'matching exercise; now to match Cex
+            i = row_start2(j, k)
+            get_WRMS = Sheets("Cex_" & str).Cells(i - 4, j)
+        Else
+        End If
+    Next j
+    
+End Function
+
+
+'Final stage of fixing the Results Glidepath formula
+Function graph_update(ByVal tst As Integer) As Integer                      '--> Front end visualization of workout database
+    Dim i, j, k, rst, col As Integer
+    Dim rdt, cdt As String
+    Dim str As String
+    
+    col = 1
+    'to find: cdt (date) - loop to find column date in row 2 from columns L(12) through V(22)
+    For j = 11 To 21
+        'Must record data when there is a positive 1-14 value in "Days Remaining" category; 0 remaining means 0 recording - implies done with routine by Friday
+        If Sheet1.Cells(2, j) > 14 Then 'Sheet1.Cells(2, j) > 14
+            'do nothing; value is too high
+        ElseIf Sheet1.Cells(2, j) = 0 And Sheet1.Cells(2, j + 1) = 0 Then 'Sheet1.Cells(2, j) <= 14 And
+            'do nothing; this is a past routine
+        ElseIf Sheet1.Cells(2, j) = 0 And Sheet1.Cells(2, j + 1) < 14 Then
+            'do nothing; next routine (j+1) is active; not this one
+        Else
+            'MsgBox ("active col # is " & j)
+            'define rst value based on current date - have k be the row of the tested date to compare
+            cdt = Sheet1.Cells(1, j - 1) + 1    'use the previous routines end date then add 1 to start new
+            i = 15 'starting value
+            
+            Do While col = 1 And i < 3210   '3210 averages 11 routines at 20 workouts per day; unreasonable amount of time spent on working out
+                If cdt = Sheet1.Cells(i, 1) Then
+                    'defines row date as when it equates to
+                    rdt = Sheet1.Cells(i, 1)
+                    rst = i
+'                    MsgBox ("rst = " & rst & " and tst = " & tst)
+                    For k = 5 To 13
+                        Sheet1.Cells(k, j) = "=SUMIFS($H$" & rst & ":$H$" & tst - 1 & ",$B$" & rst & ":$B$" & tst - 1 & ",$J" & k & ")"
+                    Next k
+                    'break while loop early
+                    col = 0
+                Else
+                    i = i + 1
+                End If
+            Loop
+            'MsgBox ("column date = " & cdt & vbCrLf & "row date = " & rdt & vbCrLf & "row = " & rst)
+        End If
+    Next j
+    
+End Function
+
+Function row_start(ByVal i As Integer, ByVal sh As Integer) As Integer
+    'MsgBox ("i = " & i & vbCrLf & "sh = " & sh)
+    Select Case (sh)
+        Case 1:
+            Do While Sheet1.Cells(i, 2) <> ""
+                i = i + 1
+            Loop
+        Case 2:
+            Do While Sheet2.Cells(i, 2) <> ""
+                i = i + 1
+            Loop
+        Case Else:
+            MsgBox ("Incorrect function call of row_start()")
+    End Select
+    'MsgBox ("Record next workout starting at row = " & i)
+    row_start = i 'store as first row to record
+End Function
+
+'Select type of workout                             '--> parameterized method for either front-end user selection or automated selection/assignment of workout category
+Function wtype(ByVal str As String) As Integer
+    Dim error As Integer
+    If str = "n/a" Then
+        error = 1 'initialize to run at least once
+        Do While error <> 0
+            wtype = InputBox("Enter # to Record Workout/Exercise or '11' to develop Routine." & vbCrLf & _
+                        "0. Record Programmed Workout" & vbCrLf & _
+                        "1. Prep Drill" & vbCrLf & _
+                        "2. Obliques" & vbCrLf & _
+                        "3. Abs" & vbCrLf & _
+                        "4. Back" & vbCrLf & _
+                        "5. Chest" & vbCrLf & _
+                        "6. Shoulder" & vbCrLf & _
+                        "7. Legs" & vbCrLf & _
+                        "8. Cardio" & vbCrLf & _
+                        "9. Biceps" & vbCrLf & _
+                        "10. Triceps" & vbCrLf & _
+                        "11. Go to Routine Manager", "Exercise Type")
+            'Error handling loops workout type input until in valid range
+            If (wtype > 11 Or wtype < 0) Then
+                MsgBox ("Number entered was not an available option. Please try again.")
+                error = 1
+            Else
+                'No errors
+                error = 0
+            End If
+        Loop
+    Else
+        Select Case (str)
+            Case "PD": 'MsgBox ("Prep Drill")
+                wtype = 1
+            Case "OB": 'MsgBox ("Obliques")
+                wtype = 2
+            Case "AB": 'MsgBox ("Abs")
+                wtype = 3
+            Case "BA": 'MsgBox ("Back")
+                wtype = 4
+            Case "CH": 'MsgBox ("Chest")
+                wtype = 5
+            Case "SH": 'MsgBox ("Shoulder")
+                wtype = 6
+            Case "LE": 'MsgBox ("Legs")
+                wtype = 7
+            Case "CA": 'MsgBox ("Cardio")
+                wtype = 8
+            Case "BI": 'MsgBox ("Biceps")
+                wtype = 9
+            Case "TR": 'MsgBox ("Tricep")
+                wtype = 10
+            Case Else: 'no change with 'ty' value
+        End Select
+    End If
+End Function
+
+'Find and update all exercise coefficients from past data                           '--> glean from exercise data in database - was old for dev_routine() but is obsolete
+Function gcex()
+    Dim i, j, k, srt(300), cnt As Integer
+    Dim exnm(300), wt(300), sc(300) As String
+    Dim coef(300), cmx As Double
+
+    'MsgBox ("sheet2(i,2)=" & row_start(15, 1))
+
+    'Update previous exercise coefficients data
+    For i = 2 To row_start(87, 2) - 1
+        For j = 15 To row_start(15, 1) - 1
+            If Sheet1.Cells(j, 3) = Sheet2.Cells(i, 2) Then
+                Sheet2.Cells(i, 4) = Sheet1.Cells(j, 6)
+            Else
+            End If
+        Next j
+    Next i
+
+    'Sort top coefficients up top and lowest coefficients at bottom
+
+    'static count of exercises                                          '--> collection of exercise cofficient data is simply a database query
+    cnt = row_start(87, 2) - 1
+    k = 2   'initialize count of rows that have been sorted
+    
+    'MsgBox ("rowstart(2,2) = " & row_start(2, 2))
+
+    'find and store rows in srt(k) that match the max
+    Do While k <= cnt
+        For i = 2 To cnt
+            'find max using "=MAX(D2:D" & row_start(87,2)-1 & ")"
+            Sheet2.Cells(12, 10) = "=MAX(D2:D" & cnt & ")"
+            cmx = Sheet2.Cells(12, 10)   'stores the current max
+            If cmx = Sheet2.Cells(i, 4) Then
+                exnm(k) = Sheet2.Cells(i, 2)
+                wt(k) = Sheet2.Cells(i, 3)
+                coef(k) = Sheet2.Cells(i, 4)
+                sc(k) = Sheet2.Cells(i, 5)
+                Sheet2.Cells(i, 2) = ""
+                Sheet2.Cells(i, 3) = ""
+                Sheet2.Cells(i, 4) = ""
+                Sheet2.Cells(i, 5) = ""
+                Sheet2.Cells(k, 30) = coef(k)
+                Sheet2.Cells(k, 31) = exnm(k)
+                Sheet2.Cells(k, 32) = wt(k)
+                Sheet2.Cells(k, 33) = sc(k)
+                k = k + 1
+            Else
+            End If
+        Next i
+    Loop
+    'MsgBox ("k + 1 = " & k & vbCrLf & "cmx = " & cmx)
+
+    're-sort the exercise data based on max coefficient
+    For k = 2 To cnt
+        Sheet2.Cells(k, 2) = Sheet2.Cells(k, 31)
+        Sheet2.Cells(k, 3) = Sheet2.Cells(k, 32)
+        Sheet2.Cells(k, 4) = Sheet2.Cells(k, 30)
+        Sheet2.Cells(k, 5) = Sheet2.Cells(k, 33)
+    Next k
+
+End Function
+
+Function fcex(ByVal exnm As String) As Double                           '--> simple database query
+    Dim i, j, k As Integer
+    
+    'Find old Cex and return value; otherwise, enter new value of 1
+    j = 0           ' no match condition
+    For i = 2 To row_start(87, 2) - 1
+        If Sheet2.Cells(i, 2) = exnm Then
+            fcex = Sheet2.Cells(i, 4)
+            j = 1           ' found a match
+        Else
+            'do nothing as it searches for a match
+        End If
+    Next i
+
+End Function
+
+Function cex_avg()                                          '
+    Dim i, j, k, ty, cnt As Integer
+    Dim cex(500) As Double
+    Dim wty As String
+
+    'Update Individual Exercise Coefficients based on Past Performance on Sheet 2
+    i = gcex()
+
+    'Check each type of workout for average cex
+    For k = 3 To 11 'use rows from Sheet2 workout types
+        wty = Sheet2.Cells(k, 1)                    'stores workout type name to search for exercise coefficients
+        'initialize count and coefficient sum of wtype workouts
+        cnt = 1
+        cex(0) = 0
+        'MsgBox (StrComp(wty, Sheet1.Cells(165, 2), vbTextCompare)) 'StrComp(wty, Sheet1.Cells(i, 2))
+        For i = 15 To row_start(15, 1) - 1
+            'for non-blank cex, store under type of exercise
+            If Sheet1.Cells(i, 6) = "" Then
+                    'do nothing
+                ElseIf wty = Sheet1.Cells(i, 2) Then
+                    cex(cnt) = Sheet1.Cells(i, 6) + cex(cnt - 1)
+                    'MsgBox ("cex(cnt) = " & cex(cnt) & vbCrLf & "sheet1.cells(i,6) = " & Sheet1.Cells(i, 6))
+                    cnt = cnt + 1
+                Else
+            End If
+        Next i
+        'store average workout type coefficient
+        Sheet2.Cells(k, 9) = cex(cnt - 1) / (cnt - 1)
+    Next k
+End Function
+
+'Select Workout from "Current_Routine" to enter in data
+Function record_workout(ByVal tst As Integer) As Integer
+    Dim i, j, k, cnt, rst, rend, cst, ty, error, Wb As Integer
+    Dim pc, tm, cex As Double
+    Dim str, exnm, scor As String
+
+    'Set body weight in corner
+    Wb = Sheets("Current_Routine").Cells(1, 8)
+
+    error = 1 'initialize to run at least once
+    Do While error <> 0
+        cnt = InputBox("Please select the Workout you wish to record from 'Current_Routine'." & _
+            vbCrLf & "1. " & Sheets("Current_Routine").Cells(1, 1) & _
+            vbCrLf & "2. " & Sheets("Current_Routine").Cells(13, 1) & _
+            vbCrLf & "3. " & Sheets("Current_Routine").Cells(25, 1) & _
+            vbCrLf & "4. " & Sheets("Current_Routine").Cells(1, 9) & _
+            vbCrLf & "5. " & Sheets("Current_Routine").Cells(13, 9) & _
+            vbCrLf & "6. " & Sheets("Current_Routine").Cells(25, 9), "Record Workout")
+        'Error handling loops workout selection input until in valid range
+        If (cnt > 6 Or cnt < 1) Then
+            MsgBox ("Number entered was not an available option. Please try again.")
+            error = 1
+        Else
+            'No errors
+            error = 0
+        End If
+    Loop    'end error checking on input
+
+    'Define Workout row/column starting/ending parameters
+    Select Case (cnt)
+        Case 1:
+            rst = 2
+            rend = 12
+            cst = 2
+        Case 2:
+            rst = 14
+            rend = 24
+            cst = 2
+        Case 3:
+            rst = 26
+            rend = 36
+            cst = 2
+        Case 4:
+            rst = 2
+            rend = 12
+            cst = 10
+        Case 5:
+            rst = 14
+            rend = 24
+            cst = 10
+        Case 6:
+            rst = 26
+            rend = 36
+            cst = 10
+        Case Else:
+            'Else statement should not be entered given Error Loop screening for 'cnt'
+    End Select
+
+    'Record Selected Workout Data                                       '--> write 'workout' instance to the database once executed
+    For i = rst To rend
+        'Receive workout area through first two letters; automate wtype or ty value
+        str = Left(Sheets("Current_Routine").Cells(i, cst - 1), 2)
+        exnm = Sheets("Current_Routine").Cells(i, cst)
+
+        If str <> "" Then
+            ty = wtype(str)
+            'MsgBox ("i = " & i & ", ty = " & ty)
+
+            'Enter with Scoring parameter to determine data to record
+            scor = Sheets("Current_Routine").Cells(i, cst + 5)
+            Select Case (scor)
+                Case "W":
+                        Sheet1.Cells(tst, 2) = Sheet2.Cells(ty + 1, 1)                      'Workout Type
+                        Sheet1.Cells(tst, 3) = exnm                                         'Exercise Name
+                        Sheet1.Cells(tst, 4) = Sheets("Current_Routine").Cells(i, cst + 1)  'Sets with given weight/#reps
+                        Sheet1.Cells(tst, 5) = Sheets("Current_Routine").Cells(i, cst + 2)  'Reps per Set(s)
+                        Sheet1.Cells(tst, 7) = Sheets("Current_Routine").Cells(i, cst + 3)  'Force/Weight in lbs
+                        Sheet1.Cells(tst, 8) = Format(Sheets("Current_Routine").Cells(i, cst + 4) * fcex(exnm), "##.00") 'Points per exercise*Cex
+                        Sheet1.Cells(tst, 6) = Format(1 / Sheet1.Cells(tst, 8), "##.000")    'Provide future Exercise Coeffecient (Cex)
+                        tst = tst + 1                                                       'iterate for every recorded entry
+
+                Case "R":
+                        Sheet1.Cells(tst, 2) = Sheet2.Cells(ty + 1, 1)                      'Workout Type
+                        Sheet1.Cells(tst, 3) = exnm                                         'Exercise Name
+                        'Sheet1.Cells(tst, 4) = ""                                           'Set Number 'Sheets("Current_Routine").Cells(i, cst + 1)
+                        Sheet1.Cells(tst, 5) = Sheets("Current_Routine").Cells(i, cst + 2)  'Reps
+                        'Sheet1.Cells(tst, 7) = ""                                        'No Weight in Rep exercises
+                        Sheet1.Cells(tst, 8) = Format(Sheets("Current_Routine").Cells(i, cst + 4) * fcex(exnm), "##.00") 'Points per exercise*Cex
+                        Sheet1.Cells(tst, 6) = Format(1 / Sheet1.Cells(tst, 8), "##.000")    'Provide future Exercise Coeffecient (Cex)
+                        tst = tst + 1 'iterate for every recorded entry
+                    
+                Case "D":
+                        Sheet1.Cells(tst, 2) = Sheet2.Cells(ty + 1, 1)                      'Workout Type
+                        Sheet1.Cells(tst, 3) = exnm                                         'Exercise Name
+'                        Sheet1.Cells(tst, 4) = ""
+                        Sheet1.Cells(tst, 5) = Sheets("Current_Routine").Cells(i, cst + 2)  'Reps (Distance in km)
+'                        Sheet1.Cells(tst, 7) = ""
+                        Sheet1.Cells(tst, 8) = Format(Sheets("Current_Routine").Cells(i, cst + 4) * fcex(exnm), "##.00") 'Points per exercise*Cex
+                        Sheet1.Cells(tst, 6) = Format(1 / Sheet1.Cells(tst, 8), "##.000")   'Provide future Exercise Coeffecient (Cex)
+                        tst = tst + 1                                                       'iterate for every recorded entry
+                        
+                Case "T":
+                        Sheet1.Cells(tst, 2) = Sheet2.Cells(ty + 1, 1)                      'Workout Type
+                        Sheet1.Cells(tst, 3) = exnm                                         'Exercise Name
+'                        Sheet1.Cells(tst, 4) = ""
+                        Sheet1.Cells(tst, 5) = Sheets("Current_Routine").Cells(i, cst + 6)  'Time (s)
+'                        Sheet1.Cells(tst, 7) = ""
+                        Sheet1.Cells(tst, 8) = Format(Sheets("Current_Routine").Cells(i, cst + 4) * fcex(exnm), "##.00") 'Points per exercise*Cex
+                        Sheet1.Cells(tst, 6) = Format(1 / Sheet1.Cells(tst, 8), "##.000")   'Provide future Exercise Coeffecient (Cex)
+                        tst = tst + 1                                                       'iterate for every recorded entry
+                Case Else:
+                        MsgBox ("Line " & i & " was not recorded. Please reenter Scoring column data or as separate exercise.")
+            End Select
+
+            Else:   'if str = "" do nothing for blanks in first column of "Current_Routine"
+        End If 'end screening if str is blank for 'no entries' in program
+    Next i
+
+    'return tst value back
+    record_workout = tst
+
+End Function
+
+Function query_workout(ByVal ty As Integer, ByVal tst As Integer, ByVal wst As Integer) As Integer
+    'MsgBox ("Qworkout function passing wtype as " & wtype("n/a")
+    Dim i, j, k, cnt, Wb As Integer
+    Dim wsc(100), wtyp(100), cex(100), exname(100), str As String
+
+    'MsgBox ("ty = " & ty & vbCrLf & "wst = " & wst)
+
+    If ty = 0 Then
+        'Record pre-built workout with start and finish times from entering the weight room or starting the first exercise until leaving / completing last exercise in workout
+        tst = record_workout(tst)
+        query_workout = tst
+    ElseIf ty = 11 Then
+        'Initialize for new workouts
+        Wb = InputBox("Enter user's current weight in lbs", "Wb Entry")
+        'Develop new Routine Brochure --> utilize individual workout feedback (programmed or individually) to build new list of high value workouts to close point value gaps
+        dev_routine (Wb)
+    Else
+    
+    'User-Driven Exercise selection from Wtype (1-10) defines input of types to record
+        'find j # of workouts per exercise type and pass to wname() string array
+        j = 1
+        For i = 2 To wst - 1
+            If (Sheet2.Cells(ty + 1, 1) = Sheet2.Cells(i, 3)) Then
+                exname(j) = Sheet2.Cells(i, 2)
+                cex(j) = Sheet2.Cells(i, 4)
+                wsc(j) = Sheet2.Cells(i, 5)
+                str = str & vbCrLf & j & ". " & wsc(j) & " - " & exname(j)
+                j = j + 1
+                Else 'do nothing
+            End If
+        Next i
+
+        'Initialize for new workouts
+        Wb = InputBox("Enter user's current weight in lbs", "Wb Entry")
+
+        str = str & vbCrLf & vbCrLf & "Inputs:" & _
+            vbCrLf & "W = Force*Sum(Reps)/Wb" & _
+            vbCrLf & "R = Sum(Reps)" & _
+            vbCrLf & "D = Distance(m)/Wb" & _
+            vbCrLf & "T = Time(s)/Wb"
+
+        cnt = j - 1     '# exercises per type
+
+        'MsgBox ("The " & Sheet2.Cells(ty + 1, 1) & " exercises are " & vbCrLf & str)
+
+        'select exercise and enter data based on type of record
+        cnt = InputBox("Enter the number for the existing " & Sheet2.Cells(ty + 1, 1) & _
+            ". " & vbCrLf & str, "Select Workout")
+        ''MsgBox ("cnt = " & cnt & vbCrLf & "Exercise selected is = " & exname(cnt) & vbCrLf & "coefficient is = " & cex(cnt))
+    'write exercise data for wtypes 1-10
+            Select Case (wsc(cnt))
+                Case "W":
+                    Sheet1.Cells(tst, 2) = Sheet2.Cells(ty + 1, 1)
+                    Sheet1.Cells(tst, 3) = exname(cnt)
+                    Sheet1.Cells(tst, 4) = InputBox("Enter the number of Sets", "Sets")
+                    Sheet1.Cells(tst, 5) = InputBox("Enter the sum(Reps) for from the " & Sheet1.Cells(tst, 4) & " sets.", "Reps")
+                    Sheet1.Cells(tst, 7) = InputBox("Enter the avg(Force) exerted in lbs over the " & exname(cnt) & " sets.")
+                    Sheet1.Cells(tst, 8) = Format(Sheet1.Cells(tst, 7) * Sheet1.Cells(tst, 5) * cex(cnt) / Wb, "##.00") 'Points per exercise*Cex
+                    Sheet1.Cells(tst, 6) = Format(1 / Sheet1.Cells(tst, 8), "##.000")       'Provide future Exercise Coeffecient (Cex)
+                    tst = tst + 1 'iterate for every recorded entry
+                Case "R":
+                    Sheet1.Cells(tst, 2) = Sheet2.Cells(ty + 1, 1)
+                    Sheet1.Cells(tst, 3) = exname(cnt)
+                    Sheet1.Cells(tst, 4) = ""
+                    Sheet1.Cells(tst, 5) = InputBox("Enter the sum(Reps) for from the " & Sheet1.Cells(tst, 4) & " sets.", "Reps")
+                    Sheet1.Cells(tst, 8) = Format(Sheet1.Cells(tst, 5) * cex(cnt), "##.00")  'Points per exercise*Cex
+                    Sheet1.Cells(tst, 6) = Format(1 / Sheet1.Cells(tst, 8), "##.000")       'Provide future Exercise Coeffecient (Cex)
+                    tst = tst + 1 'iterate for every recorded entry
+                Case "D":
+                    Sheet1.Cells(tst, 2) = Sheet2.Cells(ty + 1, 1)
+                    Sheet1.Cells(tst, 3) = exname(cnt)
+                    Sheet1.Cells(tst, 5) = InputBox("Enter the Distance in m", "Distance")
+                    Sheet1.Cells(tst, 8) = Format(Sheet1.Cells(tst, 5) * cex(cnt) / Wb, "##.00") 'Points per exercise*Cex
+                    Sheet1.Cells(tst, 6) = Format(1 / Sheet1.Cells(tst, 8), "##.000")           'Provide future Exercise Coeffecient (Cex)
+                    tst = tst + 1 'iterate for every recorded entry
+                Case "T":
+                    Sheet1.Cells(tst, 2) = Sheet2.Cells(ty + 1, 1)
+                    Sheet1.Cells(tst, 3) = exname(cnt)
+                    Sheet1.Cells(tst, 5) = InputBox("Enter the Time in (seconds) conduct " & exname(cnt) & ".", "Time")
+                    Sheet1.Cells(tst, 8) = Format(Sheet1.Cells(tst, 5) * cex(cnt) / Wb, "##.00") 'Points per exercise*Cex
+                    Sheet1.Cells(tst, 6) = Format(1 / Sheet1.Cells(tst, 8), "##.000")           'Provide future Exercise Coeffecient (Cex)
+                    tst = tst + 1 'iterate for every recorded entry
+                Case Else: MsgBox ("Please correct the Input Type for the " & exname(cnt) & " workout.")
+            End Select
+    End If
+    
+    'build on tst value after each recorded workout and pass back for graphing inclusion; no change in tst for developing new routine
+    query_workout = tst
+End Function
+
+''This controls function is designed to analyze past performance per workout category per exercise and design future workouts
+''The design goal for each exercise is to minimize coefficients per exercise and within each workout type/category.
+''This maximizes output and takes into account a history to build strength and stamina in a consistent or stable manner.
+
+Function controls(ByVal Wb As Integer)
+    Dim i, j, k, p, c, cnt(500), iter(500), jcol, a, z, d, max_settling As Integer
+    Dim cex(500), ex_in(500), Zoey, Err, Audrey, Errp As Double
+    Dim str, exnm(500), scty(500) As String
+    Dim Caleb As Long
+
+    clear_controls_data
+
+    Errp = 10
+    max_settling = 5
+
+    'Read Workout History before Writing Cex control data                   '--> change to database query
+    For k = 3 To 11
+        str = wtype2(k)
+        cnt(k) = 0 'initialize count of exercises
+
+        'label upper left with workout type
+        Sheets("Cex_" & str).Cells(1, 1) = Sheet2.Cells(k, 1)
+        Sheets("Cex_" & str).Cells(1, 1).HorizontalAlignment = xlCenter
+
+        'read workout history when it matches workout type - begin iterating for each exercise
+        For i = 15 To row_start(15, 1) - 1
+            If Sheet1.Cells(i, 2) = Sheet2.Cells(k, 1) Then
+                'Counts the number of entries in workout category (both exercises and iterations data)
+                cnt(k) = cnt(k) + 1
+
+                'see if exercise name has been entered beforehand then count an iteration before saving data
+                iter(cnt(k)) = 1 'initialize for 1 iteration of an exercise - use as handle during writing data
+                For j = 1 To cnt(k) - 1 'review previous exercise names as you go to count iterations
+                    If Sheet1.Cells(i, 3) = exnm(j) Then
+                        iter(cnt(k)) = iter(cnt(k)) + 1
+                    Else
+                    End If
+                Next j
+
+                'record pertinent exercise data for writing phase
+                exnm(cnt(k)) = Sheet1.Cells(i, 3)   'store exercise name within cnt wrt workout type
+                cex(cnt(k)) = Sheet1.Cells(i, 6)    'store exercise coefficient
+                scty(cnt(k)) = scty_fn(exnm(cnt(k))) 'retrieves either W,R,D,T for scoring type
+
+                If Sheet1.Cells(i, 7) = "" Then
+                    'not a weightroom exercise
+                    ex_in(cnt(k)) = Sheet1.Cells(i, 5)
+                Else
+                    'is a weightroom exercise
+                    ex_in(cnt(k)) = Sheet1.Cells(i, 5) * Sheet1.Cells(i, 7)
+                End If
+            Else
+            End If
+        Next i
+
+        z = 0 'initialize to count columns needing to be omitted/subtracted
+        'write exercise history into respective sheet per workout type
+        For j = 1 To cnt(k)
+            jcol = j * 3 - 1 - z
+'            If k = 9 Then MsgBox ("k=9, jcol(j=" & j & ") = " & jcol)
+            If iter(j) = 1 Then
+                'Record workout name and first iteration data
+                Sheets("Cex_" & str).Cells(1, jcol) = exnm(j)
+                Sheets("Cex_" & str).Cells(3, jcol) = metric_label(scty(j))
+                Sheets("Cex_" & str).Cells(3, jcol + 1) = "Cex"
+                Sheets("Cex_" & str).Cells(3, jcol + 2) = "Error"
+                Sheets("Cex_" & str).Cells(3 + iter(j), jcol) = ex_in(j)
+                Sheets("Cex_" & str).Cells(3 + iter(j), jcol + 1) = cex(j)
+            Else
+                'iter must be greater than 1 - need to find previous 'jcol' and enter next iteration's data
+                For p = 1 To cnt(k) - 1
+                    If (exnm(p) = exnm(j) And iter(p) = 1) Then c = p
+                Next p
+                jcol = c * 3 - 1                                        'reinitialize jcol calculation based on if statement
+                z = z + 3                                               'advance so that columns don't get missed due to iterations of same exercises
+                Sheets("Cex_" & str).Cells(3 + iter(j), jcol) = ex_in(j)
+                Sheets("Cex_" & str).Cells(3 + iter(j), jcol + 1) = cex(j)
+                Sheets("Cex_" & str).Cells(3 + iter(j), jcol + 2) = Round(1 / cex(j) - 1 / cex(j - 1), 2)
+'                If (k = 9 And j <> c) Then MsgBox ("iter(j)=" & iter(j) & " and c = " & c & " and jcol(c) = " & jcol)
+            End If
+        Next j
+
+        'write projected values to stabilize exercise coefficient
+        For j = 1 To cnt(k)
+            jcol = j * 3 - 1
+            If Sheets("Cex_" & str).Cells(1, jcol) <> "" Then
+                Sheets("Cex_" & str).Cells(2, jcol) = Wb                'Weight input at beginning
+                'Sheets("Cex_" & str).Cells(2, jcol + 1) = Sheets("Cex_" & str).Cells(row_start2(jcol, k) - 1, jcol + 1) + 0.1 'to destabilize previous coefficient and produce error to control
+                If Sheets("Cex_" & str).Cells(2, jcol + 1) = "" Then Sheets("Cex_" & str).Cells(2, jcol + 1) = 0.7
+                If row_start2(jcol, k) > 6 Then Sheets("Cex_" & str).Cells(2, jcol + 2) = 0.01          'initiate guess method to see what the output is
+            
+                'Equations produced allow for defining desired coefficient and damping ratio
+                For a = 1 To max_settling   'create variable for '5' as max_settling
+                    'Start basis for increasing output values based on finding step-wise coefficient for smooth transition
+                        If (a = 1) Then
+                            Sheets("Cex_" & str).Cells(row_start2(jcol, k) - 1, jcol + 2) = "=Round(1/" & c_ltr(jcol + 1) & (row_start2(jcol, k) - 1) & "-1/$" & c_ltr(jcol + 1) & "$2,3)"
+                            ''define first a=1 row
+                            Sheets("Cex_" & str).Cells(row_start2(jcol, k), jcol + 1) = "=Round(" & c_ltr(jcol) & "$2/" & c_ltr(jcol) & row_start2(jcol, k) & ",4)"
+                            Sheets("Cex_" & str).Cells(row_start2(jcol, k), jcol + 2) = "=Round(1/" & c_ltr(jcol + 1) & (row_start2(jcol, k)) & "-1/$" & c_ltr(jcol + 1) & "$2,3)"
+                            Sheets("Cex_" & str).Cells(row_start2(jcol, k), jcol) = "=" & c_ltr(jcol) & (row_start2(jcol, k) - 1)
+                        Else
+                            'for a > 1
+                            Sheets("Cex_" & str).Cells(row_start2(jcol, k), jcol + 1) = "=Round(1/(1/" & c_ltr(jcol + 1) & (row_start2(jcol, k) - 1) & "-" & c_ltr(jcol + 2) & (row_start2(jcol, k) - 1) & "*" & _
+                                                                                "ABS(" & c_ltr(jcol + 2) & (row_start2(jcol, k) - 1) & ")*$" & c_ltr(jcol + 2) & "$2),4)"
+                            Sheets("Cex_" & str).Cells(row_start2(jcol, k), jcol + 2) = "=Round(1/" & c_ltr(jcol + 1) & (row_start2(jcol, k)) & "-1/$" & c_ltr(jcol + 1) & "$2,7)"
+                            Sheets("Cex_" & str).Cells(row_start2(jcol, k), jcol) = "=Round((1/" & c_ltr(jcol + 1) & (row_start2(jcol, k)) & ")*$" & c_ltr(jcol) & "$2/" & c_ltr(jcol + 1) & (row_start2(jcol, k)) & ",0)"
+                            
+                        End If
+                        
+                Next a
+        
+                ''''Use Wild_Thing() to converge on solution''''
+                If row_start2(jcol, k) > 11 Then
+                    Zoey = wild_thing(jcol, k, str, max_settling)
+                Else
+                    'for small number of iterations, don't do wild_thing()
+                End If
+            Else
+            End If
+        Next j
+
+        'clear variables after writing data for each workout type
+        For j = 1 To cnt(k)
+            exnm(j) = ""
+            cex(j) = 0
+            scty(j) = ""
+            cnt(j) = 0
+        Next j
+    Next k
+
+End Function
+
+Function always_a_little_better(ByVal Audrey As Double) As Double
+    
+    always_a_little_better = Exp(Audrey) * 0.01
+
+End Function
+
+Function wild_thing(ByVal jcol As Integer, ByVal k As Integer, ByVal str As String, ByVal max_settling As Integer) As Double
+    Dim Audrey, Zoey, Luke, Emma, Eric, Lyndon, Tiger As Double
+    Dim Caleb As Long
+    Dim Dad, Mallory As Integer
+    Dim Mom As String
+
+    ''Iterative convergence''
+    Audrey = 0      'initiates as the first child starting in humility but grows in strength and honor
+    Zoey = 0.01     'she is small, but she is fierce playing with her hands until she confirms a solution
+    Caleb = 1       'he anchors our family with hope to carry on the Johnson name for future generations
+    Dad = 0         'metronome to keep count; he taught me in humility despite his sacrifice
+    Mom = "break"   'her actions broke a chain of idolatry in her life
+    Mallory = 10    'My wife is a 10 and Caleb is attached to her
+    Emma = 7        'Growing up to be like her mom...but still unique
+    Eric = 3        'Starting value before becoming error
+    
+    Sheets("Cex_" & str).Cells(row_start2(jcol, k) + 3 + Dad, jcol) = "Audrey"
+    Sheets("Cex_" & str).Cells(row_start2(jcol, k) + 3 + Dad, jcol + 1) = "Zoey"
+    Sheets("Cex_" & str).Cells(row_start2(jcol, k) + 3 + Dad, jcol + 2) = "Eric"
+
+    'input Zoey; output final error -- need jcol, k, str
+    Sheets("Cex_" & str).Cells(2, jcol + 2) = Zoey
+    Eric = Sheets("Cex_" & str).Range(c_ltr(jcol + 2) & row_start2(jcol, k) - 4)
+    Luke = Eric * 2
+
+    'Begin while loop iterative process starting with printed values; once it breaks while loop condition, it exits and does not write
+    Do While Abs(Eric) > 0.007 And Dad < 1000             'converge Eric to +/-.006 or less for tolerance
+        Zoey = always_a_little_better(Audrey)             'simple function of Audrey as input to Zoey's process
+        Sheets("Cex_" & str).Cells(2, jcol + 2) = Zoey
+        If Sheets("Cex_" & str).Cells(row_start2(jcol, k) - 1, jcol + 1) <> 0 Then  'protect against the div/0 fault
+            Eric = Sheets("Cex_" & str).Range(c_ltr(jcol + 2) & row_start2(jcol, k) - 4)
+        Else
+            'Go backwards a step and find the zero
+            Audrey = Audrey - 1 / (Caleb)
+        End If
+
+        'print initial values
+        Sheets("Cex_" & str).Cells(row_start2(jcol, k) + 4 + Dad, jcol) = Audrey
+        Sheets("Cex_" & str).Cells(row_start2(jcol, k) + 4 + Dad, jcol + 1) = Zoey
+        Sheets("Cex_" & str).Cells(row_start2(jcol, k) + 4 + Dad, jcol + 2) = Sheets("Cex_" & str).Cells(row_start2(jcol, k) - 1, jcol + 2)
+'        Debug.Print Dad & "  " & Audrey & "  " & Round(Zoey, 3) & "  " & Round(Eric, 5) & "  " & Round(Luke, 5)
+
+        'Finetune Audrey inputs for next round
+        If sign_fn(Eric) = sign_fn(Luke) And Abs(Luke) > Abs(Eric) Then        'converging Error  removed:And Abs(Eric) > 1
+            Audrey = Audrey + 1 / Caleb
+            Luke = Eric
+        ElseIf sign_fn(Eric) <> sign_fn(Luke) Then         'diverging error; break and reset at smaller value by tenths
+            Audrey = Audrey - 1 / Caleb
+            Caleb = Mallory * Caleb                                         'Caleb grows bigger as Audrey gets more accurate
+            Audrey = Audrey + 1 / Caleb
+            Luke = -Eric * Mallory * Mallory
+        ElseIf sign_fn(Eric) = sign_fn(Luke) And Abs(Eric) > Abs(Luke) And Abs(Eric) > 0.005 Then
+            'unique case where convergence stepped over a minimal value for error and needs to settle back
+            Caleb = Caleb * Mallory
+            Audrey = Audrey - 9 / Caleb
+        Else
+            'pass by when small enough error
+        End If
+        Dad = Dad + 1
+    Loop
+
+'    Add exp curve to WRMS data
+    Audrey = Sheets("Cex_" & str).Cells(row_start2(jcol, k) - 1, jcol)
+    Zoey = Sheets("Cex_" & str).Cells(row_start2(jcol, k) - max_settling, jcol)
+    Emma = (Audrey - Zoey) / Exp(max_settling)
+
+    'Add natural log glide path to solution based on
+    Lyndon = 1  'initialize half-life decay addition to exponential function for smooth curve
+    Tiger = 0   'initialize sum of half-life function to give hysteresis
+    For Dad = max_settling - 1 To 2 Step -1
+        Lyndon = Lyndon / 2
+        Tiger = Tiger + Lyndon
+        Mom = ""
+        Mom = "=ROUND((1/" & c_ltr(jcol + 1) & row_start2(jcol, k) - Dad & ")*$" & c_ltr(jcol) & "$2/" & c_ltr(jcol + 1) & row_start2(jcol, k) - Dad & ",0)"
+        Mom = Mom & "-ROUND((" & Audrey & "-" & Zoey & ")-(" & Emma & ")*(EXP(" & (max_settling + 1 - Dad + Tiger) & ")),0)"
+        Sheets("Cex_" & str).Cells(row_start2(jcol, k) - Dad, jcol) = Mom
+    Next Dad
+    
+    'reset Zoey value
+    Zoey = Sheets("Cex_" & str).Cells(2, jcol + 2)
+
+    wild_thing = Zoey
+
+End Function
+
+
+Function sign_fn(ByVal Eric As Double) As Integer
+    
+    If Eric <> 0 Then
+        sign_fn = Abs(Eric) / Eric
+    Else
+        sign_fn = 0
+    End If
+
+End Function
+
+Function c_ltr(ByVal col As Long) As String
+    Dim colstr As String
+    'Convert To Column Letter
+    
+    colstr = Split(Cells(1, col).Address, "$")(1)
+    
+    'Display Result
+'    i = 200
+'    MsgBox ("i = " & i & vbCrLf & "Column letter = " & c_ltr(i))
+    
+    'Return letter(s) in function
+    c_ltr = colstr
+    
+End Function
+
+Function metric_label(ByVal scty As String) As String
+
+    Select Case (scty)
+        Case "W":
+            metric_label = "Force*Reps"
+        Case "R":
+            metric_label = "Reps"
+        Case "D":
+            metric_label = "Distance"
+        Case "T":
+            metric_label = "Time"
+        Case Else:
+    End Select
+
+End Function
+
+Function clear_controls_data()
+    Dim k As Integer
+    Dim str As String
+    
+    'Clear Previous Controls Data
+    For k = 3 To 11
+        str = wtype2(k)
+        'label upper left with workout type
+        Sheets("Cex_" & str).Range("B1:LD1").ClearContents
+        Sheets("Cex_" & str).Range("B4:LD10000").ClearContents
+    Next k
+    
+End Function
+
+Function scty_fn(ByVal ex_nm As String) As String
+    'looks into sheet2 to return a single character for scoring type or scty
+    Dim i As Integer
+    
+    For i = 2 To row_start(87, 2) - 1
+        If ex_nm = Sheet2.Cells(i, 2) Then
+            scty_fn = Sheet2.Cells(i, 5)
+        Else
+        End If
+    Next i
+
+End Function
+
+Function wtype2(ByVal k As Integer) As String
+    
+        Select Case (k)
+            Case 3: 'MsgBox ("Obliques")
+                wtype2 = "OB"
+            Case 4: 'MsgBox ("Abs")
+                wtype2 = "AB"
+            Case 5: 'MsgBox ("Back")
+                wtype2 = "BA"
+            Case 6: 'MsgBox ("Chest")
+                wtype2 = "CH"
+            Case 7: 'MsgBox ("Shoulder")
+                wtype2 = "SH"
+            Case 8: 'MsgBox ("Legs")
+                wtype2 = "LE"
+            Case 9: 'MsgBox ("Cardio")
+                wtype2 = "CA"
+            Case 10: 'MsgBox ("Biceps")
+                wtype2 = "BI"
+            Case 11: 'MsgBox ("Tricep")
+                wtype2 = "TR"
+            Case Else: 'no change with 'ty' value
+        End Select
+
+End Function
+
+
+Function row_start2(ByVal col As Integer, ByVal k As Integer) As Integer
+    'MsgBox ("i = " & i & vbCrLf & "sh = " & sh)
+    Dim str As String
+    Dim i As Integer
+    str = "Cex_"
+    'first row to start looking
+    i = 4
+    Select Case (k)
+        Case 3:
+            Do While Sheets(str & "OB").Cells(i, col) <> ""
+                i = i + 1
+            Loop
+        Case 4:
+            Do While Sheets(str & "AB").Cells(i, col) <> ""
+                i = i + 1
+            Loop
+        Case 5:
+            Do While Sheets(str & "BA").Cells(i, col) <> ""
+                i = i + 1
+            Loop
+        Case 6:
+            Do While Sheets(str & "CH").Cells(i, col) <> ""
+                i = i + 1
+            Loop
+        Case 7:
+            Do While Sheets(str & "SH").Cells(i, col) <> ""
+                i = i + 1
+            Loop
+        Case 8:
+            Do While Sheets(str & "LE").Cells(i, col) <> ""
+                i = i + 1
+            Loop
+        Case 9:
+            Do While Sheets(str & "CA").Cells(i, col) <> ""
+                i = i + 1
+            Loop
+        Case 10:
+            Do While Sheets(str & "BI").Cells(i, col) <> ""
+                i = i + 1
+            Loop
+        Case 11:
+            Do While Sheets(str & "TR").Cells(i, col) <> ""
+                i = i + 1
+            Loop
+        Case Else:
+            MsgBox ("Incorrect function call of row_start()")
+    End Select
+    
+    row_start2 = i 'store as first row to record
+    
+End Function
+
+
+
